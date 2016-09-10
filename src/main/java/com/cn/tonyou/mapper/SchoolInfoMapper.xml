@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.SchoolInfoMapper">
+    <!-- 定义返回类型 -->
+	<resultMap type="com.cn.tonyou.pojo.SchoolInfo" id="schoolList">
+	    <id column="schoolId" property="schoolId"></id>
+	    <result column="stuTel" property="stuTel"></result>
+	    <result column="schoolAddress" property="schoolAddress"></result>
+	    <result column="schoolName" property="schoolName"></result>
+	    <result column="schoolMessage" property="schoolMessage"></result>
+	    <result column="schoolImage" property="schoolImage"></result>
+	    <result column="schoolTel" property="schoolTel"></result>
+	    <result column="schoolStartTime" property="schoolStartTime"></result>
+	    <result column="schoolCode" property="schoolCode"></result>
+	    <result column="schoolRegio" property="schoolRegio"></result>
+	    <result column="schoolType" property="schoolType"></result>
+	    <collection property="departmentInfos" column="schoolId" ofType="com.cn.tonyou.pojo.DepartmentInfo">
+	        <id column="departmentId" property="departmentId"></id>
+		    <result column="deprtmentName" property="deprtmentName"></result>
+		    <result column="deprtmentDesc" property="deprtmentDesc"></result>
+	    	<collection property="classInfo" column="departmentId" ofType="com.cn.tonyou.pojo.ClassInfo">
+				<id column="classId" property="classId"/>
+				<result column="className" property="className"/>
+			</collection>
+	    </collection>
+	</resultMap>
+    
+	<!-- 查询所有的学校信息 -->
+	<select id="selectSchoolList" resultMap="schoolList" >
+		select * from school_info
+	</select>
+	
+	<!-- 查询学校信息2 -->
+	<select id="selectSchoolList2" resultMap="schoolList" >
+		select * from school_info where schoolId = #{0}
+	</select>
+	<!-- 通过学校名字查询学校信息 -->
+	<select id="selectSchoolByName" resultMap="schoolList" >
+		select * from school_info where schoolName = #{0}
+	</select>
+	<!-- 删除学校信息 -->
+	<delete id="deleteSchool" parameterType="com.cn.tonyou.pojo.SchoolInfo">
+	    delete from school_info  where schoolId = #{schoolId}
+	</delete>
+	
+	<!-- 添加学校信息 -->
+	<insert id="addSchool" parameterType="com.cn.tonyou.pojo.SchoolInfo">
+		insert into school_info (schoolId,schoolAddress,schoolName,schoolMessage,schoolTel,schoolStartTime,schoolCode) 
+		values (#{schoolId},#{schoolAddress},#{schoolName},#{schoolMessage},#{schoolTel},to_date(#{schoolStartTime},'YYYY-MM-DD'),#{schoolCode})
+	</insert>
+	
+	<!-- 通过学校id查询学校信息 -->
+	<select id="findByIdSchool" resultMap="schoolList" parameterType="com.cn.tonyou.pojo.SchoolInfo">
+		select * from school_info sch
+		where sch.schoolId = #{schoolId}
+	</select>
+	
+	<!-- 修改学校信息 -->
+	<update id="updateSchoolInfo" parameterType="com.cn.tonyou.pojo.SchoolInfo">
+	    update school_info
+	    <set>
+	    	<if test="schoolAddress != null and schoolAddress != ''">schoolAddress = #{schoolAddress},</if>
+	    	<if test="schoolName != null and schoolName != ''">schoolName = #{schoolName},</if>
+	    	<if test="schoolMessage != null and schoolMessage != ''">schoolMessage = #{schoolMessage},</if>
+	    	<if test="schoolTel != null and schoolTel != ''">schoolTel = #{schoolTel}</if>
+	    </set>
+	    where schoolId = #{schoolId}
+	</update>
+    <!-- 查询所有的学校院系以及班级 -->
+	<select id="selectAllSchools" resultMap="schoolList" parameterType="com.cn.tonyou.pojo.SchoolInfo">
+		select sch.schoolid,sch.schoolName,de.departmentId,de.deprtmentName,cl.classId,cl.className from school_info sch
+		inner join department_info de on de.schoolid = sch.schoolid 
+	    inner join class_info cl on cl.departmentid = de.departmentid
+	</select> 
+	
+	<!-- 根据学校名称查询这个学校是否有这个学校名 -->
+	<select id="checkAddSchoolinfo" resultMap="schoolList">
+		select * from school_info where schoolName = #{0}
+	</select>
+</mapper>

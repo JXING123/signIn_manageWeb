@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.DormSigninInfoMapper">
+    <!-- 定义返回类型 -->
+	<resultMap type="com.cn.tonyou.pojo.DormSigninInfo" id="dormSigninList">
+	    <id column="dormSigninId" property="dormSigninId"></id>
+	    <result column="dormSigninAddress" property="dormSigninAddress"></result>
+	    <result column="dormSigninTime" property="insertSigninTime"></result>
+	    <result column="dormSigninTime" property="dormSigninTime"></result>
+	    <result column="dormSigninState" property="dormSigninState"></result>
+	    <result column="isvalid" property="isvalid"></result>
+	    <association property="stu" javaType="com.cn.tonyou.pojo.StuInfo">
+	        <id column="stuId" property="stuId"></id>
+			<result column="stuTel" property="stuTel"/>
+			<result column="stuSex" property="stuSex"/>
+			<result column="stuName" property="stuName"/>
+			<association property="classes" javaType="com.cn.tonyou.pojo.ClassInfo">
+	        	<id column="classId" property="classId"></id>
+	        	<result column="className" property="className"/>
+	        	<association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+	        	    <id column="departmentId" property="departmentId"></id>
+	        		<result column="deprtmentName" property="deprtmentName"/>
+	        	</association>
+	    	</association>
+			<association property="dorm" javaType="com.cn.tonyou.pojo.DormInfo">
+	        	<id column="dormId" property="dormId"></id>
+	        	<result column="dormFloorName" property="dormFloorName"/>
+	        	<result column="dormAddress" property="dormAddress"/>
+	        	<result column="dormSigninStartTime" property="dormSigninStartTime"/>
+	        	<result column="dormSigninEndTime" property="dormSigninEndTime"/>
+	    	</association>
+	    </association>
+	</resultMap>
+	
+	<!-- 通用sql -->
+	<sql id="fildListSigninSql">
+	    select * from dormsignin_info signin
+	    inner join stu_info stu on signin.stuId = stu.stuid 
+	    inner join dorm_info dorm on stu.dormid = dorm.dormid
+	</sql>
+	
+	<!-- 获取宿舍签到信息 -->
+	<select id="getStuByIdDormSigninList" resultMap="dormSigninList" parameterType="com.cn.tonyou.pojo.DormSigninInfo">
+	    <include refid="fildListSigninSql"/>
+	    where 1=1
+	    <if test="dormSigninId != null">and dormSigninId = #{dormSigninId}</if>
+	    <if test="stu != null">and signin.stuId = #{stu.stuId}</if>
+	    <if test="selectStartTime != null">and signin.dormSigninTime between to_date(#{selectStartTime},'yyyy-MM-dd') and to_date(#{selectEndTime},'yyyy-MM-dd')</if>
+	</select>
+	
+	<!--  添加学生宿舍考勤--> 
+  	<insert id="addDormsiginiAttend" parameterType="com.cn.tonyou.pojo.DormSigninInfo">
+      insert into dormsignin_info (dormSigninId,stuid,dormSigninAddress,dormSigninTime,dormSigninState) 
+      values (#{dormSigninId},#{stu.stuId},#{dormSigninAddress},to_date(#{insertSigninTime},'YYYY-MM-DD HH24:MI:SS'),#{dormSigninState})
+  	</insert> 
+  	
+  	<!--  修改宿舍考勤--> 
+ 	<update id="updateDormSignin" parameterType="com.cn.tonyou.pojo.DormSigninInfo">
+  	update dormsignin_info 
+ 	<set>
+  		<if test="dormSigninAddress != null and dormSigninAddress != ''">dormSigninAddress = #{dormSigninAddress},</if> 
+  		<if test="dormSigninTime != null">dormSigninTime = to_date ( #{insertSigninTime} , 'YYYY-MM-DD HH24:MI:SS' ),</if> 
+  		<if test="dormSigninState != null and dormSigninState != ''">dormSigninState = #{dormSigninState},</if> 
+  	</set>
+  	where dormSigninId = #{dormSigninId} 
+  </update>
+  	<!-- 删除宿舍考勤信息 -->
+	<delete id="deleteDormSignin" parameterType="string">
+	    delete from dormsignin_info  where dormSigninId = #{0}
+	</delete>
+ 	
+ 	<!-- 根据班级id和时间(当前年月日、当前年月1)查询这个班所有学生状态为正常的总和  -->
+	<select id="selectDormSigninCount" resultType="Integer">
+	    select count(*) from dormSignIn_info dormInfo
+	    inner join stu_info stu on dormInfo.stuId = stu.stuId 
+	    inner join class_info cl on stu.classId = cl.classId
+	    where cl.classId = #{0} 
+	    and dormInfo.dormSigninState = '正常' 
+	    and dormInfo.dormSigninTime between to_date(#{1},'yyyy-mm-dd') and to_date(#{2},'yyyy-mm-dd')
+	</select>
+	<!-- 查询某个学校的宿舍考勤信息 -->
+	<select id="findDormSigninList" parameterType="java.util.Map" resultMap="dormSigninList">
+	    <include refid="findDormSigninSql"></include>
+	    <where>
+	        <if test="schoolId != null and schoolId !=''">di.schoolId = #{schoolId}</if>
+	        <if test="departmentId != null and departmentId !='' ">and di.departmentId = #{departmentId}</if>
+	        <if test="classId != null and classId !='' ">and ci.classId = #{classId}</if> 
+	        <if test="clSysUserId != null and clSysUserId !='' ">and cl.sysuserid = #{clSysUserId}</if>
+	        <if test="clSysUserId != null and clSysUserId !='' ">and cl.sysuserid = #{clSysUserId}</if>  
+	        <if test="dormId != null and dormId !='' ">and dorm.dormId =#{dormId}</if>
+	        <if test="stuId != null and stuId !='' ">and signin.stuId =#{stuId}</if>
+	        <if test="startTime != null and endTime !='' ">and signin.dormSigninTime between to_date(#{startTime},'yyyy-mm-dd') and to_date(#{endTime},'yyyy-mm-dd')</if>
+	    </where>
+	</select>
+	
+	<sql id="findDormSigninSql">
+	    select di.deprtmentName,ci.className,stu.stuName,signin.* from school_info si 
+		  inner join department_info di on si.schoolid = di.schoolid 
+		  inner join class_info ci on ci.departmentid = di.departmentid
+		  inner join stu_info stu on stu.classid = ci.classid
+		  inner join dormsignin_info signin on signin.stuId = stu.stuid
+		  inner join dorm_info dorm on stu.dormid = dorm.dormid
+	</sql>
+</mapper>

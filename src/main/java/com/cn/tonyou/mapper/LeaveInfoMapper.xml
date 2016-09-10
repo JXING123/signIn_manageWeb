@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.LeaveInfoMapper">
+     <!-- 定义返回类型 -->
+	<resultMap type="com.cn.tonyou.pojo.LeaveInfo" id="leaveList">
+	    <id column="leaveId" property="leaveId"></id>
+	    <result column="startLeaveDate" property="startLeaveDate"></result>
+	    <result column="endLeaveDate" property="endLeaveDate"></result>
+	    <result column="startLeaveDate" property="startLeaveTime"></result>
+	    <result column="endLeaveDate" property="endLeaveTime"></result>
+	    <result column="extendLeaveDate" property="extendLeaveDate"></result>
+	    <result column="leaveType" property="leaveType"></result>
+	    <result column="leaveDesc" property="leaveDesc"></result>
+	    <result column="leaveState" property="leaveState"></result>
+     	<association property="stu" javaType="com.cn.tonyou.pojo.StuInfo">
+	        <id column="stuId" property="stuId"></id>
+			<result column="stuName" property="stuName"/>
+			<association property="classes" javaType="com.cn.tonyou.pojo.ClassInfo">
+	        	<id column="classId" property="classId"></id>
+	        	<result column="className" property="className"/>
+			        <association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+			        	<id column="departmentId" property="departmentId"></id>
+			        	<result column="deprtmentName" property="deprtmentName"/>
+			        	<association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+				        	<id column="schoolId" property="schoolId"></id>
+				        	<result column="schoolName" property="schoolName"/>
+			    		</association>
+			    	</association>
+	    	</association>
+   		</association>
+	</resultMap>
+    <sql id="selectLeaveSql">
+        select * from leave_info leave
+		inner join stu_info stu on leave.stuId = stu.stuid 
+	    inner join class_info cl on stu.classId = cl.classId 
+	    inner join department_info di on di.departmentId = cl.departmentId
+	    inner join school_info sch on di.schoolId = sch.schoolId
+	    inner join dorm_info dorm on dorm.dormid = stu.dormid
+    </sql>
+	<!-- 查询某个学校所有学生的请假信息 -->
+	<select id="findLeaveList" resultMap="leaveList" parameterType="java.util.Map" >
+		<include refid="selectLeaveSql"></include>
+		<where>
+		    <if test="schoolId != null and schoolId != ''">di.schoolId = #{schoolId}</if>
+        	<if test="departmentId != null and departmentId !='' ">and di.departmentId = #{departmentId}</if>
+        	<if test="classId != null and classId !='' ">and cl.classId = #{classId}</if>
+        	<if test="clSysUserId != null and clSysUserId !='' ">and cl.sysuserid = #{clSysUserId}</if> 
+        	<if test="dormId != null and dormId !='' ">and dorm.dormId = #{dormId}</if> 
+        	<if test="leaveState != null and leaveState !='' ">and leave.leaveState = '已审核'</if> 
+        	<if test="leaveTime !=null and leaveTime !=''">
+        	    <![CDATA[and leave.startleavedate <= to_date(#{leaveTime},'YYYY-MM-DD') 
+		    	and leave.endleavedate >= to_date(#{leaveTime},'YYYY-MM-DD')]]>
+		    </if>
+		    <if test="startTime !=null and endTime !=''">
+        	    <![CDATA[and leave.startleavedate >=to_date(#{startTime},'YYYY-MM-DD') 
+		    	and leave.endleavedate <= to_date(#{endTime},'YYYY-MM-DD')]]>
+		    </if> 
+		</where>
+	</select>
+	<!-- 查询某个班级或者某个学生某段时间的请假信息 -->
+	<select id="findPeriodOfTimeLeave" resultMap="leaveList" parameterType="java.util.Map">
+	    <include refid="selectLeaveSql"></include>
+	    <where>
+	        <if test="stuId != null and stuId !='' ">and stu.stuId = #{stuId}</if>
+	        <if test="startTime !=null and endTime !=''">
+        	    <![CDATA[and leave.startleavedate >=to_date(#{startTime},'YYYY-MM-DD') 
+		    	and leave.endleavedate <= to_date(#{endTime},'YYYY-MM-DD')]]>
+		    </if> 
+		    <if test="classId != null and classId !='' ">and cl.classId = #{classId}</if>
+		    <if test="leaveType !=null and leaveType=='病假'">
+		       and leave.leaveType =#{leaveType}
+		    </if>
+		    <if test="leaveType !=null and leaveType=='事假'">
+		       and leave.leaveType !='病假'
+		    </if>
+		    and leave.leaveState = '已审核'
+	    </where>
+	</select>
+	<select id="findCourseByIdTimeLeave" resultMap="leaveList" parameterType="java.util.Map">
+	    select distinct(stu.stuid),leave.* from course_info courese
+	    inner join class_info cl on courese.classId = cl.classId
+	    inner join stu_info stu on stu.classid = cl.classid
+	    inner join leave_info leave on leave.stuid = stu.stuid
+	    <where>
+	        and leave.leaveState = '已审核'
+      		<if test="courseId != null and courseId !='' ">and courese.courseid= #{courseId}</if>
+      		<if test="startTime !=null and endTime !=''">
+        	<![CDATA[and leave.startleavedate >=to_date(#{startTime},'YYYY-MM-DD') 
+		    	and leave.endleavedate <= to_date(#{endTime},'YYYY-MM-DD')]]>
+		    </if>
+		    
+		</where>
+	</select>
+	<!-- 添加请假信息 -->
+	<insert id="addLeaveInfo" parameterType="com.cn.tonyou.pojo.LeaveInfo">
+		insert into leave_info (leaveId,stuId,startleavedate,endleavedate,leaveType,leaveDesc,leaveState) 
+		values (#{leaveId},#{stu.stuId},to_date(#{startLeaveTime},'YYYY-MM-DD HH24:MI:SS'),to_date(#{endLeaveTime},'YYYY-MM-DD HH24:MI:SS'),#{leaveType},#{leaveDesc},#{leaveState})
+	</insert>  
+	
+	<!-- 删除请假信息 -->
+	<delete id="deleteLeaveInfo" parameterType="com.cn.tonyou.pojo.LeaveInfo">
+	    delete from leave_info  where leaveId = #{leaveId}
+	</delete>
+	 
+	<!-- 通过id查询请假信息 -->
+	<select id="selectLeaveInfoById" resultMap="leaveList" parameterType="com.cn.tonyou.pojo.LeaveInfo">
+		select * from leave_info leave
+		inner join stu_info stu on leave.stuId = stu.stuid 
+	    inner join class_info cl on stu.classId = cl.classId 
+	    inner join department_info de on de.departmentId = cl.departmentId
+		where leave.leaveId = #{leaveId}
+	</select>
+	
+	<!-- 查询查询某个学生某天是否有请假信息 -->
+	<select id="getStuDayLeave" resultMap="leaveList" parameterType="com.cn.tonyou.pojo.LeaveInfo">
+		<![CDATA[
+			select * from leave_info leave
+			inner join stu_info stu on leave.stuId = stu.stuid where stu.stuId = #{stu.stuId}
+		    and leave.startleavedate <= to_date(#{startLeaveTime},'YYYY-MM-DD') 
+		    and leave.endleavedate >= to_date(#{startLeaveTime},'YYYY-MM-DD')
+	    ]]>
+	</select>
+	<!-- 查询查询某个学生所有请假信息 -->
+	<select id="getStuLeaveList" resultMap="leaveList" parameterType="string">
+		<![CDATA[
+			select * from leave_info leave
+			inner join stu_info stu on leave.stuId = stu.stuid
+			where stu.stuId = #{stuId}
+	    ]]>
+	</select>
+    <!-- 添加请假 --> 
+    <insert id="addLeaveForStu" parameterType="com.cn.tonyou.pojo.LeaveInfo">
+        insert into leave_info (leaveid,stuid,startleavedate,endleavedate,leavetype,leavedesc,leavestate) 
+        values (#{leaveId},#{stu.stuId},to_date(#{startLeaveTime},'YYYY-MM-DD HH24:MI:SS'),to_date(#{endLeaveTime},'YYYY-MM-DD HH24:MI:SS'),#{leaveType},#{leaveDesc},#{leaveState})
+    </insert>
+    
+    <!-- 修改请假信息 -->
+	<update id="updateLeaveInfo" parameterType="com.cn.tonyou.pojo.LeaveInfo">
+	    update leave_info
+	    <set>
+	    	<if test="leaveDesc != null and leaveDesc != ''">leaveDesc = #{leaveDesc}</if>
+	    </set>
+	    where leaveId = #{leaveId}
+	</update>
+	
+	<!-- 修改审核状态 -->
+	<update id="updateState" parameterType="com.cn.tonyou.pojo.LeaveInfo">
+	    update leave_info
+	    <set>
+	    	<if test="leaveState != null and leaveState != ''">leaveState = #{leaveState}</if>
+	    </set>
+	    where leaveId = #{leaveId}
+	</update>
+    
+    
+    <!-- 修改请假 -->
+	<update id="updateLeaveForStu" parameterType="com.cn.tonyou.pojo.ClockingInfo">
+	    update leave_info
+	    <set>
+	        <if test="stu != null">stuid = #{stu.stuId},</if>
+	    	<if test="startleavedate != null">startleavedate = to_date ( #{startLeaveTime} , 'YYYY-MM-DD HH24:MI:SS' ),</if>
+	    	<if test="endleavedate != null">endleavedate = to_date ( #{endLeaveTime} , 'YYYY-MM-DD HH24:MI:SS' ),</if>
+	    	<if test="clockState != null and clockState != ''">clockState = #{clockState},</if>
+	    	<if test="leaveType != null">leaveType = #{leaveType}</if>
+	    	<if test="leaveDesc != null">leaveDesc = #{leaveDesc}</if>
+	    	<if test="leaveState != null">leaveState = #{leaveState}</if>
+	    </set>
+	    where clockingId = #{clockingId}
+	</update>
+</mapper>

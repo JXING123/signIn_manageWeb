@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.CourseInfoMapper">
+    <!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.CourseInfo" id="courseList">
+        <id column="courseId" property="courseId"></id>
+        <result column="week" property="week"></result>
+        <result column="schoolBuilding" property="schoolBuilding"></result>
+        <result column="classRoom" property="classRoom"></result>
+        <result column="weekNext" property="weekNext"></result>
+        <result column="setSuji" property="setSuji"></result>
+        <result column="startTime" property="startTime"></result>
+        <result column="endTime" property="endTime"></result>
+        <result column="wifiName" property="wifiName"></result>
+        <result column="wifiRouteId" property="wifiRouteId"></result>
+        <association property="subject" javaType="com.cn.tonyou.pojo.SubjectInfo">
+            <id column="subjectId" property="subjectId"></id>
+        	<result column="subjectName" property="subjectName"></result>
+        </association>
+        <association property="classes" javaType="com.cn.tonyou.pojo.ClassInfo">
+           <id column="classId" property="classId"></id>
+       	   <result column="className" property="className"></result>
+           <result column="classYear" property="classYear"></result>
+           <association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+	        	<id column="departmentId" property="departmentId"></id>
+	        	<result column="deprtmentName" property="deprtmentName"/>
+	        	<association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+	        	    <id column="schoolId" property="schoolId"></id>
+					<result column="schoolName" property="schoolName"/>
+	        	</association>
+	    	</association>
+       </association>
+       <association property="sysUser" javaType="com.cn.tonyou.pojo.SysUserInfo">
+            <id column="sysUserId" property="sysUserId"></id>
+            <result column="sysUserName" property="sysUserName"></result>
+            <result column="sysUserTel" property="sysUserTel"></result>
+            <result column="sysUserPassWord" property="sysUserPassWord"></result>
+            <result column="sysUserSex" property="sysUserSex"></result>
+            <result column="sysUserAge" property="sysUserAge"></result>
+            <result column="sysUserAddress" property="sysUserAddress"></result>
+            <result column="lastLoginTime" property="lastLoginTime"></result>
+            <result column="createTime" property="createTime"></result>
+            <result column="sysUserState" property="sysUserState"></result>
+            <result column="loginCount" property="loginCount"></result>
+            <association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+                <id column="schoolId" property="schoolId"></id>
+            	<result column="schoolName" property="schoolName"></result>
+            </association>
+        </association>
+    </resultMap>
+    
+    <!-- 通过学生班级Id获取课程表信息 -->
+    <select id="getCourseListForStu" resultMap="courseList">
+		select * from course_info cou 
+		inner join class_info cl on cl.classId = cou.classId 
+		inner join subject_info suj on suj.subjectId = cou.subjectId 
+		inner join sys_user_info su on su.sysuserId = cou.sysuserId 
+		inner join stu_info stu on stu.classid = cl.classid 
+		where stu.stuid = #{0}	
+	</select>
+	
+	<!-- 查询所有课程 -->
+	<select id="findCourseList" resultMap="courseList" parameterType="java.util.Map">
+	   	<include refid="courseSql"></include>
+	    <where>
+	        <if test="schoolId != null and schoolId != ''">di.schoolId = #{schoolId}</if>
+	        <if test="departmentId != null and departmentId !='' ">and di.departmentId = #{departmentId}</if>
+	        <if test="classId != null and classId !='' ">and cl.classId = #{classId}</if>
+	        <if test="sysUserId != null and sysUserId !='' ">and courese.sysuserId = #{sysUserId}</if>
+	        <if test="subjectName != null and subjectName !='' ">and sub.subjectName = #{subjectName}</if>
+	    </where>
+	</select>
+	<!-- 课程通用sql -->
+	<sql id="courseSql">
+	    select * from course_info courese
+	    inner join subject_info sub on courese.subjectId = sub.subjectId
+	    inner join sys_user_info su on su.sysuserId = courese.sysuserId 
+	    inner join class_info cl on courese.classId = cl.classId
+	    inner join department_info di on cl.departmentId = di.departmentId
+	    inner join school_info sch on di.schoolId = sch.schoolId
+	</sql>
+	<!--添加课程 -->
+	<insert id="addCourseInfo"  parameterType="com.cn.tonyou.pojo.CourseInfo">
+		insert into course_info (courseId,subjectId,week,schoolBuilding,classRoom,weekNext,setSuji,startTime,endTime,classId,sysuserid,wifiName,wifiRouteId) 
+		values (#{courseId},#{subject.subjectId},#{week},#{schoolBuilding},#{classRoom},#{weekNext},#{setSuji},#{startTime},#{endTime},#{classes.classId},#{sysUser.sysUserId},#{wifiName},#{wifiRouteId})
+	</insert>
+	 <!-- 根据班级id和星期一获取到星期一的课程总数-->
+	<select id="findClassByIdCourse" resultType="com.cn.tonyou.pojo.CourseInfo">
+		select * from course_info courese where courese.classid = #{0}
+	</select>
+	<!-- 删除课程 -->
+	<delete id="deleteCourseInfo" parameterType="com.cn.tonyou.pojo.CourseInfo">
+	    delete from course_info  where courseId = #{courseId}
+	</delete>
+	
+	<!-- 根据id查询课程 -->
+	<select id="findCourseInfoById" resultMap="courseList" parameterType="com.cn.tonyou.pojo.CourseInfo">
+		select * from course_info courese
+	    inner join subject_info sub on courese.subjectId = sub.subjectId
+	    inner join class_info cl on courese.classId = cl.classId
+		where courese.courseId = #{courseId}
+	</select>
+	
+	<!-- 修改课程 -->
+	<update id="updateCourseInfo" parameterType="com.cn.tonyou.pojo.CourseInfo">
+	    update course_info
+	    <set>
+	        <if test="week != null and week != ''">week = #{week},</if>
+	    	<if test="classRoom != null and classRoom != ''">classRoom = #{classRoom},</if>
+	    	<if test="schoolBuilding != null and schoolBuilding != ''">schoolBuilding = #{schoolBuilding},</if>
+	    	<if test="setSuji != null and setSuji != ''">setSuji = #{setSuji},</if>
+	    	<if test="startTime != null and startTime != ''">startTime = #{startTime},</if>
+	    	<if test="endTime != null and endTime != ''">endTime = #{endTime},</if>
+	    	<if test="weekNext != null and weekNext != ''">weekNext = #{weekNext},</if>
+	    	<if test="wifiName != null and wifiName != ''">wifiName = #{wifiName},</if>
+	    	<if test="wifiRouteId != null and wifiRouteId != ''">wifiRouteId = #{wifiRouteId},</if>
+	    	<if test="sysUser != null and sysUser != ''">sysUserId = #{sysUser.sysUserId}</if>
+	    </set>
+	    where courseId = #{courseId}
+	</update>
+	<!--   通过学生Id获取一个某个星期几课程表信息 --> 
+ 	<select id="getWeekCourseInfoList" resultMap="courseList">
+	  <include refid="courseSQL" /> 
+	  where stu.stuid = #{0} and cou.week = #{1} 
+  </select>
+  <sql id="courseSQL">
+      select * from course_info cou 
+      inner join class_info cl on cl.classId = cou.classId 
+      inner join subject_info suj on suj.subjectId = cou.subjectId 
+      inner join sys_user_info su on su.sysuserId = cou.sysuserId 
+      inner join stu_info stu on stu.classid = cl.classid
+  </sql> 
+  <!--   通过班级id获取一个某个星期几课程表信息 --> 
+ 	<select id="findCourseByClassIdAndTime" resultMap="courseList">
+	  select * from course_info cou 
+      inner join class_info cl on cl.classId = cou.classId 
+      inner join subject_info suj on suj.subjectId = cou.subjectId 
+      inner join sys_user_info su on su.sysuserId = cou.sysuserId 
+	  where cl.classId = #{0} and cou.week = #{1} 
+  </select>
+  
+   
+	
+	
+</mapper>

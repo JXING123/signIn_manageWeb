@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cn.tonyou.mapper.StuInfoMapper">
+    <!-- 定义返回类型 -->
+	<resultMap type="com.cn.tonyou.pojo.StuInfo" id="stuInfoList">
+	    <id column="stuId" property="stuId"></id>
+	    <result column="stuTel" property="stuTel"></result>
+	    <result column="stuPhoneIndentifying" property="stuPhoneIndentifying"></result>
+	    <result column="stuName" property="stuName"></result>
+	    <result column="stuIdCard" property="stuIdCard"></result>
+	    <result column="stuSex" property="stuSex"></result>
+	    <result column="stuBirthday" property="stuBirthday"></result>
+	    <result column="stuNative" property="stuNative"></result>
+	    <result column="stuAddress" property="stuAddress"></result>
+	    <result column="stuImage" property="stuImage"></result>
+	    <result column="stuEmail" property="stuEmail"></result>
+	    <result column="stuDesc" property="stuDesc"></result>
+	    <result column="stuState" property="stuState"></result>
+	    <result column="lastLoginTime" property="lastLoginTime"></result>
+	    <result column="createTime" property="createTime"></result>
+	    <result column="loginCount" property="loginCount"></result> 
+	    <association property="classes" javaType="com.cn.tonyou.pojo.ClassInfo">
+	        <id column="classId" property="classId"></id>
+			<result column="className" property="className"/>
+	        <result column="classYear" property="classYear"/>
+	        <association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+	        	<id column="departmentId" property="departmentId"></id>
+	        	<result column="deprtmentName" property="deprtmentName"/>
+	        	<association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+	        	    <id column="schoolId" property="schoolId"></id>
+					<result column="schoolName" property="schoolName"/>
+					<result column="schoolAddress" property="schoolAddress"></result>
+					<result column="schoolTel" property="schoolTel"></result>
+	        	</association>
+	    	</association>
+	    </association>
+	    <association property="dorm" javaType="com.cn.tonyou.pojo.DormInfo">
+	        <id column="dormId" property="dormId"></id>
+			<result column="dormFloorName" property="dormFloorName"/>
+	    </association>
+	</resultMap>
+    
+    
+	<!-- 通过学生id查询学生 -->
+	<select id="findByIdStu" resultMap="stuInfoList" parameterType="com.cn.tonyou.pojo.StuInfo">
+		select * from stu_info stu
+		inner join class_info cl on stu.classId = cl.classId 
+		inner join department_info de on cl.departmentId = de.departmentId
+	    inner join school_info sch on de.schoolId = sch.schoolId
+	    left join dorm_info dorm on dorm.dormId = stu.dormId 
+		where stu.stuId = #{stuId}
+	</select>
+
+	<!-- 查询所有的学生信息 -->
+	<select id="findListStu" resultMap="stuInfoList" parameterType="java.util.Map">
+		select * from Stu_info stu
+	    inner join class_info cl on stu.classId = cl.classId 
+	    inner join department_info di on cl.departmentId = di.departmentId
+	    inner join school_info sch on di.schoolId = sch.schoolId
+	    left join dorm_info dorm on dorm.dormId = stu.dormId
+	    <where>
+	        <if test="schoolId != null and schoolId !=''">di.schoolId = #{schoolId}</if>
+	        <if test="departmentId != null and departmentId !=''">and di.departmentId = #{departmentId}</if>
+	        <if test="classId != null and classId !='' ">and cl.classId = #{classId}</if>
+	        <if test="clSysUserId != null and clSysUserId !='' ">and cl.sysuserid = #{clSysUserId}</if>  
+	    </where>
+	</select>
+	
+	<!-- 插入上课学生数据 -->
+	<insert id="addStu" parameterType="com.cn.tonyou.pojo.StuInfo">
+		insert into stu_info (stuId,stuTel,stuName,stuPassword,stuPhoneIndentifying,stuIdCard,stuSex,stuBirthday,stuNative,classId,stuAddress,stuEmail,dormId,stuState) 
+		values (#{stuId},#{stuTel},#{stuName},#{stuPassword},#{stuPhoneIndentifying},#{stuIdCard},#{stuSex},#{stuBirthday},#{stuNative},#{classes.classId},#{stuAddress},#{stuEmail},#{dorm.dormId},#{stuState})
+	</insert>
+	
+	<!-- 客户端注册添加学生 -->
+	<insert id="userReg" parameterType="com.cn.tonyou.pojo.StuInfo">
+		insert into stu_info (stuId,stuTel,stuName,stuPassword,stuPhoneIndentifying,stuIdCard,stuSex,stuNative,classId,stuAddress,stuImage,stuEmail,dormId) 
+		values (#{stuId,jdbcType=VARCHAR},#{stuTel,jdbcType=VARCHAR},#{stuName,jdbcType=VARCHAR},#{stuPassword,jdbcType=VARCHAR},#{stuPhoneIndentifying,jdbcType=VARCHAR},#{stuIdCard,jdbcType=VARCHAR},#{stuSex,jdbcType=VARCHAR},#{stuNative,jdbcType=VARCHAR},#{classes.classId,jdbcType=VARCHAR},#{stuAddress,jdbcType=VARCHAR},#{stuImage,jdbcType=VARCHAR},#{stuEmail,jdbcType=VARCHAR},#{dorm.dormId,jdbcType=VARCHAR})
+	</insert>
+	
+	<!-- 客户端学生登录 -->
+	<select id="stuLogin" resultType="com.cn.tonyou.pojo.StuInfo">
+		select * from stu_info where stuid = #{0} and stupassword = #{1}
+	</select>
+	
+	
+	<!-- 修改上课学生 -->
+	<update id="updateStuInfo" parameterType="com.cn.tonyou.pojo.StuInfo">
+	    update stu_info
+	    <set>
+	        <if test="stuName != null">stuName = #{stuName},</if>
+	        <if test="stuPassword != null">stuPassword = #{stuPassword},</if>
+	        <if test="classes != null">classId = #{classes.classId},</if>
+	    	<if test="stuSex != null and stuSex != ''">stuSex = #{stuSex},</if>
+	    	<if test="stuTel != null and stuTel != ''">stuTel = #{stuTel},</if>
+	    	<if test="stuIdCard != null and stuIdCard != ''">stuIdCard = #{stuIdCard},</if>
+	    	<if test="stuNative != null and stuNative != ''">stuNative = #{stuNative},</if>
+	    	<if test="stuBirthday != null and stuBirthday != ''">stuBirthday = #{stuBirthday},</if>
+	    	<if test="stuAddress != null and stuAddress != ''">stuAddress = #{stuAddress},</if>
+	    	<if test="stuEmail != null and stuEmail != ''">stuEmail = #{stuEmail},</if>
+	    	<if test="stuImage != null and stuImage != ''">stuImage = #{stuImage},</if>
+	    	<if test="dorm != null">dormId = #{dorm.dormId},</if>
+	    	<if test="stuState != null and stuState != ''">stuState = #{stuState}</if>
+	    </set>
+	    where stuId = #{stuId}
+	</update>
+	
+	<!-- 删除上课学生信息 -->
+	<delete id="deleteStuinfo" parameterType="com.cn.tonyou.pojo.StuInfo">
+	    delete from Stu_info  where StuId = #{stuId}
+	</delete>
+	
+	<!-- 根据班级id查询学生表 -->
+	<select id="selectStuInfoByClassId" resultMap="stuInfoList" parameterType="com.cn.tonyou.pojo.ClassInfo">
+	    select * from Stu_info where classId = #{classId}
+	</select>
+	
+	<!-- 根据宿舍id查询学生表 -->
+	<select id="selectStuInfoByDormId" resultMap="stuInfoList" parameterType="com.cn.tonyou.pojo.DormInfo">
+	    select * from Stu_info where dormId = #{dormId}
+	</select>
+	<!-- 根据手机号查询学生表 -->
+	<select id="selectStuInfoByTel" resultMap="stuInfoList" parameterType="com.cn.tonyou.pojo.StuInfo">
+	    select * from Stu_info where stuTel = #{stuTel}
+	</select>
+	
+	<!-- 修改审核状态 -->
+	<update id="updateState" parameterType="com.cn.tonyou.pojo.StuInfo">
+	    update Stu_info
+	    <set>
+	    	<if test="stuState != null and stuState != ''">stuState = #{stuState}</if>
+	    </set>
+	    where stuId = #{stuId}
+	</update>
+</mapper>

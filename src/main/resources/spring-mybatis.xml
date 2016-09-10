@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!--设置二级缓存 -->
+	<settings>  
+        <setting name="cacheEnabled" value="true" />  
+        <setting name="lazyLoadingEnabled" value="true" />  
+        <setting name="multipleResultSetsEnabled" value="true" />  
+        <setting name="useColumnLabel" value="true" />  
+        <setting name="defaultExecutorType" value="REUSE" />  
+        <setting name="defaultStatementTimeout" value="25000" />  
+    </settings>
+	<!-- 必须放在开头-->
+	<typeAliases>
+		
+	</typeAliases>
+	
+	<!-- <environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC" />
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.jdbc.Driver" />
+				<property name="url" value="jdbc:mysql://localhost:3306/test?useUnicode=true&amp;characterEncoding=utf-8" />
+				<property name="username" value="root"></property>
+				<property name="password" value="root" />
+			</dataSource>
+		</environment>
+	</environments> -->
+	<!-- mapper必须要放在最后面 
+	<mappers>
+		<mapper resource="com/mzy/mapper/AppraiseMapper.xml"/>
+	</mappers> -->
+	
+</configuration>

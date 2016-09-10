@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.DepartmentInfoMapper">
+     <!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.DepartmentInfo" id="departmentList">
+        <id column="departmentId" property="departmentId"></id>
+        <result column="deprtmentName" property="deprtmentName"></result>
+        <result column="deprtmentDesc" property="deprtmentDesc"></result>
+        <association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+            <id column="schoolId" property="schoolId"></id>
+            <result column="schoolAddress" property="schoolAddress"></result>
+            <result column="schoolName" property="schoolName"></result>
+            <result column="schoolMessage" property="schoolMessage"></result>
+            <result column="schoolImage" property="schoolImage"></result>
+            <result column="schoolTel" property="schoolTel"></result>
+            <result column="schoolStartTime" property="schoolStartTime"></result>
+            <result column="schoolCode" property="schoolCode"></result>
+            <result column="schoolRegio" property="schoolRegio"></result>
+            <result column="schoolType" property="schoolType"></result>
+        </association>
+        <collection property="classInfo" column="departmentId" ofType="com.cn.tonyou.pojo.ClassInfo">
+			<id column="classId" property="classId"></id>
+	        <result column="className" property="className"></result>
+	        <result column="classYear" property="classYear"></result>
+		</collection>
+    </resultMap>
+    
+    <!-- 查询所有的系别 -->
+	<select id="findListDepartmentInfo" resultMap="departmentList">
+		<include refid="fildListDepartmentSql"/>
+	</select>
+	
+	<!-- 通用sql查询所有系别链表 -->
+    <sql id="fildListDepartmentSql">
+        select * from department_info department
+        inner join school_info school on department.schoolId = school.schoolId
+        <where>
+            <if test="_parameter!=null and _parameter!=''">school.schoolId = #{0}</if>
+        </where>
+       
+    </sql>
+    
+    <!--根据学校id查询出学校所有的系别 -->
+    <select id="getDepartmentBySchoolId" resultMap="departmentList" parameterType="com.cn.tonyou.pojo.SchoolInfo">
+        select * from department_info department where department.schoolId = #{schoolId}
+    </select>
+    
+    <!-- 添加系别 -->
+	<insert id="addDepartmentInfo" parameterType="com.cn.tonyou.pojo.DepartmentInfo">
+		insert into department_info (departmentId,deprtmentName,deprtmentDesc,schoolId) 
+		values (#{departmentId},#{deprtmentName},#{deprtmentDesc},#{school.schoolId})
+	</insert> 
+	
+	<!-- 删除系别 -->
+	<delete id="deleteDepartmentInfo" parameterType="com.cn.tonyou.pojo.DepartmentInfo">
+	    delete from department_info  where departmentId = #{departmentId}
+	</delete>
+	
+	<!-- 通过系别id查询系别信息 -->
+	<select id="findDepartmentById" resultMap="departmentList" parameterType="com.cn.tonyou.pojo.DepartmentInfo">
+		select * from department_info de
+		inner join school_info school on de.schoolId = school.schoolId
+		where de.departmentId = #{departmentId}
+	</select>
+	
+	<!-- 通过系别名称以及学校id查询系别信息 -->
+	<select id="findDepartmentByName" resultMap="departmentList">
+		select * from department_info 
+		where deprtmentName = #{0}
+		and schoolId = #{1}
+	</select>
+	
+	<!-- 修改系别信息 -->
+	<update id="updateDepartmentInfo" parameterType="com.cn.tonyou.pojo.DepartmentInfo">
+	    update department_info
+	    <set>
+	    	<if test="deprtmentName != null and deprtmentName != ''">deprtmentName = #{deprtmentName},</if>
+	    	<if test="deprtmentDesc != null and deprtmentDesc != ''">deprtmentDesc = #{deprtmentDesc}</if>
+	    </set>
+	    where departmentId = #{departmentId}
+	</update>
+	
+	<!-- 添加系别时 根据学校id和系别名称来判断该学校是否存在改系别-->
+	<select id="checkAddDepartmentinfo" resultMap="departmentList">
+		select * from department_info de
+		inner join school_info sch on de.schoolId = sch.schoolId
+		where de.deprtmentName = #{1} and sch.schoolId = #{0}
+	</select>
+</mapper>

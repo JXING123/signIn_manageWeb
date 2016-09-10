@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.SysAuthInfoMapper">
+    <!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.SysAuthInfo" id="authList">
+	     <id column="sysAuthId" property="sysAuthId"></id>
+	     <result column="sysauthName" property="sysAuthName"></result>
+	     <result column="sysauthModel" property="sysAuthModel"></result>
+	     <result column="sysauthDesc" property="sysAuthDesc"></result>
+	     <result column="sysAuthParentId" property="sysAuthParentId"></result>
+	     <result column="sysauthPath" property="sysAuthPath"></result>
+    </resultMap>
+    
+	<!-- 获取所有的权限信息 -->
+	<select id="findAuthList" resultMap="authList">
+	    <include refid="selectAuthSql"></include>
+	</select>
+	
+	<!-- 获取某个权限的信息 -->
+	<select id="findByIdAuth" resultMap="authList">
+	    <include refid="selectAuthSql"></include>
+	    where sysAuthid = #{0}
+	</select>
+	
+	<!-- 添加权限信息 -->
+	<insert id="addSysAuthInfo" parameterType="com.cn.tonyou.pojo.SysAuthInfo">
+	    insert into 
+	    	sys_Auth_info(sysAuthId,sysAuthName,sysauthModel,sysauthDesc,sysAuthParentId,sysauthPath) 
+	    	values(#{sysAuthId},#{sysAuthName},#{sysAuthModel},#{sysAuthDesc},#{sysAuthParentId},#{sysAuthPath})
+	</insert>
+	
+	<!-- 删除权限信息 -->
+	<delete id="deleteByIdAuth">
+	    delete from sys_Auth_info where sysAuthid = #{0}
+	</delete>
+	
+	<!-- 修改权限信息 -->
+	<update id="updateByIdAuth" parameterType="com.cn.tonyou.pojo.SysAuthInfo">
+	    update sysAuthinfo
+	    <set>
+	    	<if test="sysAuthName != null and sysAuthName != ''">sysAuthName = #{sysAuthName}</if>
+	    	<if test="sysauthModel != null and sysauthModel != ''">sysauthModel = #{sysauthModel}</if>
+	    	<if test="sysauthDesc != null and sysauthDesc != ''">sysauthDesc = #{sysauthDesc}</if>
+	    </set>
+	    where sysAuthid = #{sysAuthId}
+	</update>
+	<sql id="selectAuthSql">
+	    select * from sys_Auth_info
+	</sql>
+	
+</mapper>

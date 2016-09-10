@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.ClockingMapper">
+    <!-- 定义返回类型 -->
+	<resultMap type="com.cn.tonyou.pojo.ClockingInfo" id="clockingList">
+	    <id column="clockingId" property="clockingId"></id>
+	    <result column="clockingAddress" property="clockingAddress"></result>
+	    <result column="clockingDate" property="clockingDate"></result>
+	    <result column="clockState" property="clockState"></result>
+	    <result column="isvalid" property="isvalid"></result>
+	    <association property="stu" javaType="com.cn.tonyou.pojo.StuInfo">
+	        <id column="stuId" property="stuId"></id>
+			<result column="stuTel" property="stuTel"/>
+			<result column="stuSex" property="stuSex"/>
+			<result column="stuName" property="stuName"/>
+			<result column="stuPassword" property="stuPassword"/>
+			<result column="stuImage" property="stuImage"/>
+			<result column="stuPhoneIndentifying" property="stuPhoneIndentifying"/>
+			<result column="stuIdCard" property="stuIdCard"/>
+			<association property="classes" javaType="com.cn.tonyou.pojo.ClassInfo">
+	        	<id column="classId" property="classId"></id>
+	        	<result column="className" property="className"/>
+	    	</association>
+	    </association>
+	    <association property="course" javaType="com.cn.tonyou.pojo.CourseInfo">
+	        <id column="courseId" property="courseId"></id>
+			<result column="schoolBuilding" property="schoolBuilding"/>
+			<result column="week" property="week"/>
+			<result column="classRoom" property="classRoom"/>
+			<result column="startTime" property="startTime"/>
+			<result column="endTime" property="endTime"/>
+			<association property="subject" javaType="com.cn.tonyou.pojo.SubjectInfo">
+	        	<id column="subjectId" property="subjectId"></id>
+	        	<result column="subjectName" property="subjectName"/>
+	        </association>
+	    </association>
+	</resultMap>
+	
+	<!-- 通过学生id查询学生 -->
+	<select id="findByIdStu" resultType="com.cn.tonyou.pojo.StuInfo" parameterType="int">
+		select * from stu_info where stuId = #{stuId}
+	</select>
+	<select id="findByIdCourse" resultType="com.cn.tonyou.pojo.CourseInfo">
+		select * from course where courseId = #{courseId}
+	</select>
+	<!-- 通过考勤编号去查询用户对象 -->
+	<select id="findByIdClocking" resultMap="clockingList" >
+	    <include refid="findListClockingSql"></include>
+		where clock.clockingId = #{clockingId}
+	</select>
+	
+	<!-- 插入上课考勤数据 -->
+	<insert id="addClocking" parameterType="com.cn.tonyou.pojo.ClockingInfo">
+		insert into clocking_info (clockingid,stuid,clockingaddress,clockingdate,courseid,clockstate,isvalid) 
+		values (#{clockingId},#{stu.stuId},#{clockingAddress},to_date(#{insertDate},'YYYY-MM-DD HH24:MI:SS'),#{course.courseId},#{clockState},#{isvalid})
+	</insert>
+	<!-- 修改上课考勤 -->
+	<update id="updateClocking" parameterType="com.cn.tonyou.pojo.ClockingInfo">
+	    update clocking_info
+	    <set>
+	        <if test="stu != null">stuid = #{stu.stuId},</if>
+	    	<if test="clockingAddress != null and clockingAddress != ''">clockingAddress = #{clockingAddress},</if>
+	    	<if test="clockingDate != null">clockingDate = to_date ( #{clockingDate} , 'YYYY-MM-DD HH24:MI:SS' ),</if>
+	    	<if test="clockState != null and clockState != ''">clockState = #{clockState},</if>
+	    	<if test="isvalid != null">isvalid = #{isvalid}</if>
+	    </set>
+	    where clockingId = #{clockingId}
+	</update>
+	<!-- 删除上课考勤信息 -->
+	<delete id="deleteClocking" parameterType="com.cn.tonyou.pojo.ClockingInfo">
+	    delete from clocking_info  where clockingId = #{clockingId}
+	</delete>
+	
+
+	<!-- 根据学生id获取考勤信息 -->
+	<select id="getStuByIdClocking" resultMap="clockingList" parameterType="java.lang.String">
+	    <include refid="findListClockingSql"/>
+	    where 1=1  and clock.stuId = #{param1}
+	    <if test="param2 != null"> and clockingdate = to_date(#{param2},'yyyy-mm-dd')</if>
+	</select>
+	<!-- 根据学生id以及时间查询考勤 -->
+	<select id="getStuByIdAndTime" resultMap="clockingList" parameterType="java.lang.String">
+	    <include refid="findListClockingSql"/>
+	    where  clock.stuId = #{0}
+	     and clockingdate between to_date(#{1},'yyyy-mm-dd') and to_date(#{2},'yyyy-mm-dd')
+	</select>
+	<!-- 根据班级id以及时间查询考勤 -->
+	<select id="getClassByIdAndTime" resultMap="clockingList" parameterType="java.lang.String">
+	    <include refid="findListClockingSql"/>
+	    where stu.classId = #{0}
+	     and clockingdate between to_date(#{1},'yyyy-mm-dd') and to_date(#{2},'yyyy-mm-dd')
+	</select>
+	<!-- 根据班级id和时间(当前年月日、当前年月1)查询这个班所有学生状态为正常的总和  -->
+	<select id="selectClockingCount" resultType="Integer">
+	    select count(*) from clocking_info clock
+	    inner join stu_info stu on clock.stuId = stu.stuid 
+	    inner join class_info cl on stu.classId = cl.classId
+	    where cl.classId = #{0} 
+	    and clock.clockstate = '正常' 
+	    and clock.clockingdate between to_date(#{1},'yyyy-mm-dd') and to_date(#{2},'yyyy-mm-dd')
+	</select>
+	
+	<!--  where di.schoolId -->
+	<select id="findByParamsClocking"  resultMap="clockingList" parameterType="java.util.Map">
+	    <include refid="findListClockingSql"></include>
+	    <where>
+	        <if test="schoolId != null and schoolId != ''">di.schoolId = #{schoolId}</if>
+	        <if test="departmentId != null and departmentId !='' ">and di.departmentId = #{departmentId}</if>
+	        <if test="classId != null and classId !='' ">and cl.classId = #{classId}</if>
+	        <if test="clSysUserId != null and clSysUserId !='' ">and cl.sysuserid = #{clSysUserId}</if>  
+	        <if test="siSysUserId != null and siSysUserId !='' ">or si.sysuserid = #{siSysUserId}</if> 
+	        <if test="selDate != null and selDate !='' ">and clock.clockingdate like to_date(#{selDate},'yyyy-MM-dd')</if>
+	    </where>
+	</select>
+	
+	<!-- 获取某个班某个段时间的考勤情况 -->
+	<select id="findTimeAndClassByIdClocking" resultMap="clockingList" parameterType="java.util.Map">
+	    <include refid="findListClockingSql"></include>
+	     where cl.classId = #{classId}
+	     and clockingdate between to_date(#{startTime},'yyyy-mm-dd') and to_date(#{endTime},'yyyy-mm-dd')
+	</select>
+	<!-- 获取某个课程某个段时间的考勤情况 -->
+	<select id="findTimeAndCourseByIdClocking" resultMap="clockingList" parameterType="java.util.Map">
+	    <include refid="findListClockingSql"></include>
+	     where clock.courseId = #{courseId}
+	     <if test="startTime !=null and endTime!=null">
+		     and clockingdate between to_date(#{startTime},'yyyy-mm-dd') and to_date(#{endTime},'yyyy-mm-dd')
+	     </if>
+	     <if test="time !=null and time !=''">and clockingdate like to_date(#{time},'yyyy-mm-dd')</if>
+	</select>
+	
+	<!-- 通用sql -->
+	<sql id="findListClockingSql">
+	    select * from clocking_info clock
+	    inner join stu_info stu on clock.stuId = stu.stuid 
+	    inner join course_info course on course.courseId = clock.courseid
+	    inner join class_info cl on stu.classId = cl.classId 
+	    inner join department_info di on di.departmentid = cl.departmentid
+	    left join subject_info si on course.subjectId = si.subjectid
+	</sql>
+</mapper>

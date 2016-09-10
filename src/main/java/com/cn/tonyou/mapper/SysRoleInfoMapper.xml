@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cn.tonyou.mapper.SysRoleInfoMapper">
+    <!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.SysRoleInfo" id="roleList">
+	     <id column="sysRoleId" property="sysRoleId"></id>
+	     <result column="sysRoleName" property="sysRoleName"></result>
+	     <result column="sysRoleDesc" property="sysRoleDesc"></result>
+	     <result column="createRoleTime" property="createRoleTime"></result>
+	     <collection property="sysAuthInfos" column="sysRoleId" ofType="com.cn.tonyou.pojo.SysAuthInfo">
+			<id column="sysAuthId" property="sysAuthId"/>
+			<result column="sysAuthName" property="sysAuthName"/>
+		 </collection>
+    </resultMap>
+    <!-- 获取所有的角色信息 -->
+	<select id="findRoleList" resultMap="roleList">
+	    <include refid="selectRoleSql"></include>
+	   	where sri.sysroleid != '1'
+	</select>
+	
+	<!-- 获取某个角色的信息 -->
+	<select id="findByIdRole" resultMap="roleList">
+	    <include refid="selectRoleSql"></include>
+	    where sri.sysroleid = #{0}
+	</select>
+	
+	<!-- 添加角色信息 -->
+	<insert id="addSysRoleInfo" parameterType="com.cn.tonyou.pojo.SysRoleInfo">
+	    insert into sys_role_info(sysRoleId,sysRoleName,sysRoleDesc,createRoleTime) 
+	    	values(#{sysRoleId},#{sysRoleName},#{sysRoleDesc},to_date(#{insertCreateRoleTime},'YYYY-MM-DD HH24:MI:SS'))
+	</insert>
+	
+	<!-- 删除角色信息 -->
+	<delete id="deleteByIdRole">
+	    delete from sys_role_info where sysroleid = #{0}
+	</delete>
+	
+	<!-- 修改角色信息 -->
+	<update id="updateByIdRole" parameterType="com.cn.tonyou.pojo.SysRoleInfo">
+	    update sys_role_info
+	    <set>
+	    	<if test="sysRoleName != null and sysRoleName != ''">sysRoleName = #{sysRoleName},</if>
+	    	<if test="sysRoleDesc != null and sysRoleDesc != ''">sysRoleDesc = #{sysRoleDesc}</if>
+	    </set>
+	    where sysroleid = #{sysRoleId}
+	</update>
+	<!-- 通用sql查询 -->
+	<sql id="selectRoleSql">
+	    select * from sys_role_info sri
+	    	left join sys_role_auth sra ON sra.sysroleid = sri.sysroleid
+          	left join sys_auth_info sai ON sai.sysauthid = sra.sysauthid
+	</sql>
+	<select id="findRoleByName" resultType="com.cn.tonyou.pojo.SysRoleInfo">
+	    select * from sys_role_info where sysRoleName = #{0}
+	</select>
+</mapper>

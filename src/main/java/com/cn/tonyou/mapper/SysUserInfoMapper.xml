@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.SysUserInfoMapper">
+    <resultMap type="com.cn.tonyou.pojo.SysUserInfo" id="sysUserList">
+	     <id column="sysUserId" property="sysUserId"></id>
+	     <result column="sysUserName" property="sysUserName"></result>
+	     <result column="sysUserTel" property="sysUserTel"></result>
+	     <result column="sysUserPassWord" property="sysUserPassWord"></result>
+	     <result column="sysUserSex" property="sysUserSex"></result>
+	     <result column="sysUserAge" property="sysUserAge"></result>
+	     <result column="sysUserAddress" property="sysUserAddress"></result>
+	     <result column="lastLoginTime" property="lastLoginTime"></result>
+	     <result column="createTime" property="createTime"></result>
+	     <result column="sysUserState" property="sysUserState"></result>
+	     <result column="loginCount" property="loginCount"></result>
+	     <association property="classes" javaType="com.cn.tonyou.pojo.ClassInfo">
+            <id column="classId" property="classId"></id>
+            <result column="className" property="className"></result>
+            <association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+	            <id column="departmentId" property="departmentId"></id>
+	            <result column="deprtmentName" property="deprtmentName"></result>
+	             <association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+		            <id column="schoolId" property="schoolId"></id>
+		            <result column="schoolName" property="schoolName"></result>
+	         	</association> 
+         	</association> 
+         </association> 
+	     <association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+	         <id column="schoolId" property="schoolId"></id>
+		    <result column="schoolName" property="schoolName"></result>
+	     </association>
+	     <collection property="sysRoleInfos" column="sysUserId" ofType="com.cn.tonyou.pojo.SysRoleInfo">
+			<id column="sysRoleId" property="sysRoleId"/>
+			<result column="sysRoleName" property="sysRoleName"/>
+			<collection property="sysAuthInfos" column="sysRoleId" ofType="com.cn.tonyou.pojo.SysAuthInfo">
+				<id column="sysAuthId" property="sysAuthId"/>
+				<result column="sysAuthName" property="sysAuthName"/>
+		 	</collection>	
+		 </collection>
+    </resultMap>
+
+	
+	<!-- 根据用户名称查询用户 -->
+	<select id="getUserByName" resultMap="sysUserList">
+	    <include refid="selectSysUserSql"></include>
+	    where sysUserName = #{0}
+	</select>
+	
+	<!-- 根据用户名id用户 -->
+	<select id="getUserById" resultMap="sysUserList">
+	    select * from sys_user_info users
+	    left join school_info school on users.schoolId = school.schoolId
+	    left join sys_user_role sur on sur.sysuserid = users.sysuserid 
+      	left join sys_role_info sysRole on sysRole.sysroleid = sur.sysroleid
+	    where users.sysUserId = #{0}
+	</select>
+	<!-- 通用sql查询 -->
+	<sql id="selectSysUserSql">
+	    SELECT
+		    sui.sysUserName,
+		    sui.sysUserId,
+		    sui.sysUserPassWord,
+		    sui.schoolId,
+		    sri.sysRoleId,
+		    sri.sysRoleName,
+		    sai.sysAuthId,
+		    sai.sysAuthName
+    	FROM 
+          sys_user_info sui 
+          left join sys_user_role sur ON sui.sysuserid = sur.sysuserid 
+          left join sys_role_info sri ON sri.sysroleid = sur.sysroleid
+          left join sys_role_auth sra ON sra.sysroleid = sri.sysroleid
+          left join sys_auth_info sai ON sai.sysauthid = sra.sysauthid
+          left join school_info sch ON sui.schoolid = sch.schoolid
+          left join department_info di ON di.schoolid = sch.schoolid
+	</sql>
+	<!-- 获取某个学校为老师的所有用户 -->
+	<select id="findRoleTeacherSysUserList"  resultMap="sysUserList">
+	    <include refid="selectSysUserSql"></include>
+	    <where>
+	        sri.sysRoleName = '任课教师'
+	        <if test="param1 != null and param1 != ''">and sui.schoolId = #{0}</if>
+	        <if test="param2 != null and param2 != ''">and di.departmentId = #{1}</if>
+	    </where>
+	</select>
+	<!-- 根据科目名称和学校id获取管理员信息 -->
+	<select id="findSubjectByNameAndSchoolId" resultMap="sysUserList">
+	    select * from sys_user_info sui 
+	    inner join course_info course on course.sysuserid= sui.sysuserid
+	    inner join subject_info sub on course.subjectid = sub.subjectid
+	    where sui.schoolid = #{0} and sub.subjectname =#{1}
+	</select>
+	<!-- 获取某个学校为辅导员的所有用户 -->
+	<select id="findRoleCoachSysUserList"  resultMap="sysUserList">
+	    <include refid="selectSysUserSql"></include>
+	    <where>
+	        sri.sysRoleName = '辅导员'
+	        <if test="_parameter != null and _parameter != ''">and sui.schoolId = #{0}</if>
+	    </where>
+	</select>
+	<!-- 查询所有用户 -->
+	<select id="findSysUserInfoList" resultMap="sysUserList" parameterType="java.util.Map">
+	    select * from sys_user_info users
+	    left join school_info school on users.schoolId = school.schoolId
+	    <where>
+	        <!-- users.sysuserid != 'admin' -->
+	        <if test="schoolId != null and schoolId != ''">and users.schoolId = #{schoolId}</if>
+	        <if test="departmentId != null and departmentId !='' ">and di.departmentId = #{departmentId}</if>
+	        <if test="classId != null and classId !='' ">and cl.classId = #{classId}</if>
+	    </where>
+	</select>
+	<!-- 增加用户 -->
+	<insert id="addSysUserInfo" parameterType="com.cn.tonyou.pojo.SysUserInfo">
+		insert into sys_user_info (sysUserId,sysUserName,sysUserTel,sysUserPassWord,sysUserSex,sysUserAddress,createTime,loginCount,schoolId,sysUserState,sysUserAge) 
+		values (#{sysUserId},#{sysUserName},#{sysUserTel},#{sysUserPassWord},#{sysUserSex},#{sysUserAddress},to_date(#{createTime},'YYYY-MM-DD HH24:MI:SS'),#{loginCount},#{school.schoolId},#{sysUserState},#{sysUserAge})
+	</insert>
+	<!-- 修改用户信息 -->
+	<update id="updateByIdSysUser" parameterType="com.cn.tonyou.pojo.SysUserInfo">
+	     update sys_user_info
+	    <set>
+	    	<if test="sysUserName != null and sysUserName != ''">sysUserName = #{sysUserName},</if>
+	    	<if test="sysUserTel != null and sysUserTel != ''">sysUserTel = #{sysUserTel},</if>
+	    	<if test="sysUserPassWord != null and sysUserPassWord != ''">sysUserPassWord = #{sysUserPassWord},</if>
+	    	<if test="sysUserAge != null and sysUserAge != ''">sysUserAge = #{sysUserAge},</if>
+	    	<if test="sysUserAddress != null and sysUserAddress != ''">sysUserAddress = #{sysUserAddress},</if>
+	    	<if test="loginCount != null and loginCount != ''">loginCount = #{loginCount},</if>
+	    	<if test="sysUserState != null and sysUserState != ''">sysUserState = #{sysUserState},</if>
+	    	<if test="lastLoginTime != null and lastLoginTime != ''">lastLoginTime = #{lastLoginTime}</if>
+	    </set>
+	    where sysuserid = #{sysUserId}
+	</update>
+	
+	<!-- 删除用户信息 -->
+	<delete id="deleteByIdSysUser">
+	    delete from sys_user_info where sysuserid = #{0}
+	</delete>
+</mapper>

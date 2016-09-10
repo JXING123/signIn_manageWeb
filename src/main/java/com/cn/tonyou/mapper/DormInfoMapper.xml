@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.DormInfoMapper">
+    <!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.DormInfo" id="dormList">
+        <id column="dormId" property="dormId"></id>
+        <result column="dormFloorName" property="dormFloorName"></result>
+        <result column="wifiName" property="wifiName"></result>
+        <result column="wifiRouteid" property="wifiRouteid"></result>
+        <result column="dormDesc" property="dormDesc"></result>
+        <result column="dormPopulation" property="dormPopulation"></result>
+        <result column="dormAddress" property="dormAddress"></result>
+        <result column="dormSigninStartTime" property="dormSigninStartTime"></result>
+        <result column="dormSigninEndTime" property="dormSigninEndTime"></result>
+        <association property="classes" javaType="com.cn.tonyou.pojo.ClassInfo">
+            <id column="classId" property="classId"></id>
+            <result column="className" property="className"></result>
+            <association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+	            <id column="departmentId" property="departmentId"></id>
+	            <result column="deprtmentName" property="deprtmentName"></result>
+	            <association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+		            <id column="schoolId" property="schoolId"></id>
+		            <result column="schoolName" property="schoolName"></result>
+       			</association>
+       		</association>
+        </association>
+        <collection property="stuInfos" column="dormId" ofType="com.cn.tonyou.pojo.StuInfo">
+			<id column="stuId" property="stuId"></id>
+	        <result column="stuName" property="stuName"></result>
+		</collection>
+    </resultMap>
+    
+    
+	
+	<!-- 查询所有宿舍-->
+	<select id="findDormList" resultMap="dormList" parameterType="java.util.Map">
+	    select * from  dorm_info do inner join class_info cl on do.classId = cl.classId
+	    inner join department_info di on cl.departmentId = di.departmentId
+	    inner join school_info sch on di.schoolId = sch.schoolId
+	    <where>
+	        <if test="schoolId != null and schoolId !=''">di.schoolId = #{schoolId}</if>
+	        <if test="departmentId != null and departmentId !='' ">and di.departmentId = #{departmentId}</if>
+	        <if test="classId != null and classId !='' ">and cl.classId = #{classId}</if> 
+	        <if test="clSysUserId != null and clSysUserId !='' ">and cl.sysuserid = #{clSysUserId}</if> 
+	    </where>
+	</select>
+	
+	<!--  根据学生id查询宿舍考勤表  --> 
+  	<select id="getDormListForStuId" resultType="com.cn.tonyou.pojo.DormInfo">
+      	select * from dorm_info dor inner join stu_info stu on stu.dormid = dor.dormid where stu.stuid = #{0}
+  	</select> 
+		
+	
+	<!-- 根据学校id和班级id查询宿舍-->
+	<select id="getDormInfo2" resultMap="dormList">
+	    select * from dorm_info do inner join class_info cl on do.classId = cl.classId
+	    inner join department_info de on cl.departmentId = de.departmentId
+	    inner join school_info sch on de.schoolId = sch.schoolId
+	    where sch.schoolId = #{0} and cl.classId = #{1}
+	</select>
+	<!-- 根据学校id和班级id查询宿舍-->
+	<select id="findDormByClassIdAndDormName" resultType="com.cn.tonyou.pojo.DormInfo">
+	    select * from dorm_info do inner join class_info cl on do.classId = cl.classId
+	    where cl.classId = #{0} and do.dormAddress =#{1}
+	</select>
+	<!--添加宿舍 -->
+	<insert id="addDormInfo"  parameterType="com.cn.tonyou.pojo.DormInfo">
+		insert into dorm_info (dormId,dormFloorName,wifiName,wifiRouteid,dormDesc,dormPopulation,dormAddress,dormSigninStartTime,dormSigninEndTime,classId) 
+		values (#{dormId},#{dormFloorName},#{wifiName},#{wifiRouteid},#{dormDesc},#{dormPopulation},#{dormAddress},#{dormSigninStartTime},#{dormSigninEndTime},#{classes.classId})
+	</insert>
+	
+	<!-- 删除宿舍 -->
+	<delete id="deleteDormInfo" parameterType="com.cn.tonyou.pojo.DormInfo">
+	    delete from dorm_info where dormId = #{dormId}
+	</delete>
+	
+	<!-- 根据id查询宿舍 -->
+	<select id="findDormInfoById" resultMap="dormList" parameterType="com.cn.tonyou.pojo.DormInfo">
+	    select * from  dorm_info do inner join class_info cl on do.classId = cl.classId
+	    inner join department_info de on cl.departmentId = de.departmentId
+	    inner join school_info sch on de.schoolId = sch.schoolId
+	    where do.dormId = #{0}
+	</select>
+	
+	<!-- 修改宿舍 -->
+	<update id="updateDormInfo" parameterType="com.cn.tonyou.pojo.DormInfo">
+	    update dorm_info
+	    <set>
+	        <if test="dormFloorName != null and dormFloorName != ''">dormFloorName = #{dormFloorName},</if>
+	    	<if test="dormPopulation != null and dormPopulation != ''">dormPopulation = #{dormPopulation},</if>
+	    	<if test="dormDesc != null and dormDesc != ''">dormDesc = #{dormDesc},</if>
+	    	<if test="dormAddress != null and dormAddress != ''">dormAddress = #{dormAddress},</if>
+	    	<if test="dormSigninStartTime != null and dormSigninStartTime != ''">dormSigninStartTime = #{dormSigninStartTime},</if>
+	    	<if test="dormSigninEndTime != null and dormSigninEndTime != ''">dormSigninEndTime = #{dormSigninEndTime},</if>
+	    	<if test="wifiRouteid != null and wifiRouteid != ''">wifiRouteid = #{wifiRouteid},</if>
+	    	<if test="wifiName != null and wifiName != ''">wifiName = #{wifiName}</if>
+	    	
+	    </set>
+	    where dormId = #{dormId}
+	</update>
+</mapper>

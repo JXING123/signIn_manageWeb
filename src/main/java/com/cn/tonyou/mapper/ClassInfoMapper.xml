@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.ClassInfoMapper">
+    <!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.ClassInfo" id="classList">
+        <id column="classId" property="classId"></id>
+        <result column="className" property="className"></result>
+        <result column="classYear" property="classYear"></result>
+        <association property="sysUser" javaType="com.cn.tonyou.pojo.SysUserInfo">
+            <id column="sysUserId" property="sysUserId"></id>
+            <result column="sysUserName" property="sysUserName"></result>
+            <result column="sysUserTel" property="sysUserTel"></result>
+            <result column="sysUserPassWord" property="sysUserPassWord"></result>
+            <result column="sysUserSex" property="sysUserSex"></result>
+            <result column="sysUserAge" property="sysUserAge"></result>
+            <result column="sysUserAddress" property="sysUserAddress"></result>
+            <result column="lastLoginTime" property="lastLoginTime"></result>
+            <result column="createTime" property="createTime"></result>
+            <result column="sysUserState" property="sysUserState"></result>
+            <result column="loginCount" property="loginCount"></result>
+        </association>
+        <association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+           <id column="departmentId" property="departmentId"></id>
+	       <result column="deprtmentName" property="deprtmentName"></result>
+	       <result column="deprtmentDesc" property="deprtmentDesc"></result>
+	       <association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+	           <id column="schoolId" property="schoolId"></id>
+		       <result column="schoolAddress" property="schoolAddress"></result>
+		       <result column="schoolName" property="schoolName"></result>
+		       <result column="schoolMessage" property="schoolMessage"></result>
+		       <result column="schoolImage" property="schoolImage"></result>
+		       <result column="schoolTel" property="schoolTel"></result>
+		       <result column="schoolStartTime" property="schoolStartTime"></result>
+		       <result column="schoolCode" property="schoolCode"></result>
+       	   </association>
+       </association>
+       <collection property="dormInfo" column="classId" ofType="com.cn.tonyou.pojo.DormInfo">
+			<id column="dormId" property="dormId"></id>
+	        <result column="dormFloorName" property="dormFloorName"></result>
+		</collection>
+    </resultMap>
+    <!-- 查询所有的学校 -->
+    <select id="selectAll" resultMap="classList">
+        select * from class_info classInfo 
+        inner join department_info di on classInfo.departmentId = di.departmentId
+		inner join school_info sch on di.schoolId = sch.schoolId
+    </select>
+    <!-- 根据系别id查询班级 -->
+	<select id="findListClassInfo" resultMap="classList" parameterType="java.util.Map">
+		select * from class_info classInfo 
+		inner join sys_user_info sui on classInfo.sysuserid = sui.sysuserid
+		inner join department_info di on classInfo.departmentId = di.departmentId
+		inner join school_info sch on di.schoolId = sch.schoolId
+		<where>
+		    <if test="schoolId != null and schoolId != ''">di.schoolId = #{schoolId}</if>
+	        <if test="departmentId != null and departmentId !='' ">and di.departmentId = #{departmentId}</if>
+		</where>
+	</select>
+	
+	<!-- 查询所有班级 -->
+	<select id="getClassinfo" resultMap="classList">
+	    select * from class_info cl
+	    inner join sys_user_info sys on cl.sysUserId = sys.sysUserId
+	    inner join department_info di on cl.departmentId = di.departmentId
+	    inner join school_info sch on di.schoolId = sch.schoolId
+	    <where>
+	        <if test="_parameter!=null">sch.schoolId = #{0}</if>
+	    </where>
+	   
+	</select>
+	<!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.ClassInfo" id="classList2">
+        <id column="classId" property="classId"></id>
+        <result column="className" property="className"></result>
+        <association property="department" javaType="com.cn.tonyou.pojo.DepartmentInfo">
+           <id column="departmentId" property="departmentId"></id>
+	       <result column="deprtmentName" property="deprtmentName"></result>
+	       <association property="school" javaType="com.cn.tonyou.pojo.SchoolInfo">
+	           <id column="schoolId" property="schoolId"></id>
+		       <result column="schoolName" property="schoolName"></result>
+       	   </association>
+       </association>
+    </resultMap>
+	
+    <!-- 添加班级 -->
+	<insert id="addClassInfo" parameterType="com.cn.tonyou.pojo.ClassInfo">
+		insert into class_info (classId,className,classYear,departmentId,sysUserId) 
+		values (#{classId},#{className},#{classYear},#{department.departmentId},#{sysUser.sysUserId})
+	</insert> 
+    
+    <!-- 删除班级 -->
+	<delete id="deleteClassInfo" parameterType="com.cn.tonyou.pojo.ClassInfo">
+	    delete from class_info  where classId = #{classId}
+	</delete>
+	
+	<!-- 通过班级id查询班级信息 -->
+	<select id="findByIdClass" resultMap="classList">
+		select * from class_info c
+		inner join department_info de on c.departmentId = de.departmentId
+		where c.classId = #{classId}
+	</select>
+	
+	<!-- 修改班级信息 -->
+	<update id="updateClassInfo" parameterType="com.cn.tonyou.pojo.ClassInfo">
+	    update class_info
+	    <set>
+	    	<if test="className != null and className != ''">className = #{className},</if>
+	    	<if test="classYear != null and classYear != ''">classYear = #{classYear},</if>
+	    	<if test="department != null and department != ''">departmentId = #{department.departmentId},</if>
+	    	<if test="sysUser != null and sysUser != ''">sysUserId = #{sysUser.sysUserId}</if>
+	    </set>
+	    where classId = #{classId}
+	</update>
+	
+	<!-- 根据系别id查询这个系是否有这个班级名 -->
+	<select id="checkAddClassinfo" resultMap="classList">
+		select * from class_info ci
+		inner join department_info di on ci.departmentId = di.departmentId
+		where ci.className = #{1} and di.departmentId = #{0}
+	</select>
+	<!-- 根据系别id以及班级名字查询班级 -->
+	<select id="selectClassByIdAndName" resultMap="classList">
+		select * from class_info where className = #{0} and departmentId = #{1}
+	</select>
+	
+	<!-- 根据系别id查询这个学校这个系所在的所有班级 -->
+	<select id="getAllClassByDepartmentId" resultMap="classList">
+	    select * from class_info cl
+	    inner join department_info di on cl.departmentId = di.departmentId
+	    inner join school_info sch on di.schoolId = sch.schoolId
+	    inner join sys_user_info sys on cl.sysUserId = sys.sysUserId
+	    where di.departmentId = #{0}
+	</select>
+	
+	<!-- 查询该老师所带的班级或者这个老师所教的 -->
+	<select id="findSysClassId" parameterType="java.util.Map" resultType="com.cn.tonyou.pojo.ClassInfo">
+	    <include refid="classSql"></include>
+	    <where>
+	        <if test="schoolId!=null and schoolId!=''">sys.schoolId = #{schoolId}</if>
+	        	<!-- 查询这个老师所教的班级信息 （教师）-->
+	         <if test="siSysUserId != null and siSysUserId != ''" >course.sysuserid = #{siSysUserId}</if>
+	         <!-- 查询这个老师所带的班级信息 -->
+	         <if test="clSysUserId != null and clSysUserId !=''">or cl.sysUserId = #{clSysUserId}</if>
+	    </where>
+	</select>
+	<sql id="classSql">
+	    select distinct cl.* from class_info cl inner join sys_user_info sys on cl.sysUserId = sys.sysUserId
+	    left join course_info course on course.classid = cl.classid
+	    left join subject_info si on course.subjectId = si.subjectid
+	</sql>
+</mapper>

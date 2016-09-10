@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" 
+	xmlns="http://java.sun.com/xml/ns/javaee" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+	http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+	<servlet>
+	<!-- 配置 freemarker-->  
+    <servlet-name>freemarker</servlet-name>
+    <servlet-class>freemarker.ext.servlet.FreemarkerServlet</servlet-class>
+    <init-param>
+      <param-name>TemplatePath</param-name>
+      <param-value>/</param-value>
+    </init-param>
+    <!-- 模板载入文件夹，这里相对context root，递归获取该文件夹下的所有模板 --> 
+    <init-param>
+      <param-name>NoCache</param-name><!-- 是否对模板缓存 -->
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>ContentType</param-name>
+      <param-value>text/html;charset=utf-8</param-value>
+      <!-- 强制使用 UTF-8作为输出编码格式! -->
+    </init-param>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>freemarker</servlet-name>
+    <url-pattern>*.ftl</url-pattern>
+  </servlet-mapping>
+  <!-- 指定Spring的配置文件 -->
+  <servlet>
+    <servlet-name>springMVC</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:springmvc-servlet.xml</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>springMVC</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>
+        classpath:spring-mvc.xml,
+        classpath:applicationContext-shiro.xml
+    </param-value>
+  </context-param>
+  <!-- 防内存泄漏监听 -->
+  <listener>
+     <listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+  </listener>
+  <!-- 指定以Listener方式启动Spring容器 -->
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!-- 拦截路径 
+   <filter>
+       <filter-name>login</filter-name>
+       <filter-class>com.cn.tonyou.filter.LoginFilter</filter-class>
+   </filter>
+   <filter-mapping>
+       <filter-name>login</filter-name>
+       <url-pattern>/*</url-pattern>
+   </filter-mapping>-->
+   
+  <!-- 定义编码过滤器-->
+	<filter>
+    <filter-name>characterEncodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+    <init-param>
+      <param-name>forceEncoding</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>characterEncodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping> 
+  <!-- 字符编码过滤器 -->
+	<filter>
+		<filter-name>CharaterEncoding</filter-name>
+		<filter-class>com.cn.tonyou.filter.CharaterEncoding</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>CharaterEncoding</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+  
+  <!-- shiro 安全过滤器 -->   
+	<filter>
+	  <!-- 这里的filter-name要和spring的applicationContext-shiro.xml里的  
+            org.apache.shiro.spring.web.ShiroFilterFactoryBean的bean name相同 --> 
+    <filter-name>shiroFilter</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    <init-param>
+      <param-name>targetFilterLifecycle</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>shiroFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>  
+  <!-- 错误拦截 -->
+  <error-page>
+		<exception-type>java.lang.Throwable</exception-type>
+		<location>/WEB-INF/error/500.jsp</location>
+	</error-page>
+	<error-page>
+		<error-code>500</error-code>
+		<location>/WEB-INF/error/500.jsp</location>
+	</error-page>
+	<error-page>
+		<error-code>404</error-code>
+		<location>/WEB-INF/error/404.jsp</location>
+	</error-page>
+  <!-- 默认页面 
+	<welcome-file-list>
+	  <welcome-file>login.jsp</welcome-file>
+	</welcome-file-list>-->
+</web-app>

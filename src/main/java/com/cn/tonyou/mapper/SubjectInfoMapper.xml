@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	注意：所有的sql语句都不能有结束符号‘;’
+ -->
+<mapper namespace="com.cn.tonyou.mapper.SubjectInfoMapper">
+    <!-- 定义返回类型 -->
+    <resultMap type="com.cn.tonyou.pojo.SubjectInfo" id="subjectInfoList">
+        <id column="subjectId" property="subjectId"></id>
+        <result column="subjectName" property="subjectName"></result>
+    </resultMap>
+    
+	<!-- 查询所有科目 -->
+	<select id="selectAllSubject" resultMap="subjectInfoList">
+	    select * from subject_info
+	</select>
+	
+	<!-- 添加科目 -->
+	<insert id="addSubjectInfo"  parameterType="com.cn.tonyou.pojo.SubjectInfo">
+		insert into subject_info(subjectId,subjectName) 
+		values (#{subjectId,jdbcType=VARCHAR},#{subjectName,jdbcType=VARCHAR})
+	</insert>
+	
+	<!-- 删除科目 -->
+	<delete id="deleteSubjectInfo" parameterType="com.cn.tonyou.pojo.SubjectInfo">
+	    delete from subject_info where subjectId = #{subjectId}
+	</delete>
+	
+	<!-- 根据id查询科目 -->
+	<select id="findSubjectInfoById" resultMap="subjectInfoList" parameterType="com.cn.tonyou.pojo.SubjectInfo">
+		select * from subject_info sub 
+		where sub.subjectId = #{subjectId}
+	</select>
+	<!-- 根据名称查询科目 -->
+	<select id="findSubjectInfoByName" resultMap="subjectInfoList" parameterType="string">
+		select * from subject_info sub 
+		where sub.subjectName = #{0}
+	</select>
+	
+	<!-- 修改科目 -->
+	<update id="updateSubjectInfo" parameterType="com.cn.tonyou.pojo.SubjectInfo">
+	    update subject_info
+	    <set>
+	    	<if test="subjectName != null and subjectName != ''">subjectName = #{subjectName}</if>
+	    </set>
+	    where subjectId = #{subjectId}
+	</update>
+</mapper>

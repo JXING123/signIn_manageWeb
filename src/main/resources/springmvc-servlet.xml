@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:aop="http://www.springframework.org/schema/aop"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"  
+    xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"  
+    xsi:schemaLocation="http://www.springframework.org/schema/beans   
+    http://www.springframework.org/schema/beans/spring-beans.xsd  
+     http://www.springframework.org/schema/mvc   
+     http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd   
+     http://www.springframework.org/schema/aop   
+     http://www.springframework.org/schema/aop/spring-aop-3.0.xsd   
+     http://www.springframework.org/schema/context   
+     http://www.springframework.org/schema/context/spring-context.xsd"> 
+     <!-- 配置 freemarker--> 
+     <description>spring mvc config xml</description>
+     
+  	<!-- 使用包扫描扫描使用LoginAction类作为controller -->
+  	<context:component-scan base-package="com.cn.tonyou.controller" />
+   	<!-- 启动shiro注解  在lifecycleBeanPostProcessor之后运行，不然不会拦截没有权限错误请求-->
+     <bean id="controllerAdvisorAutoProxyCreator" class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+		  depends-on="lifecycleBeanPostProcessor"/>
+	<bean id="controllerAuthorizationAttributeSourceAdvisor"  class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+		<property name="securityManager" ref="securityManager"/>
+	</bean>
+     <!-- 默认注解映射支持 -->  
+     <mvc:annotation-driven/>
+      <!-- 默认访问跳转到登录页面(即定义无需Controller的url<->view直接映射) -->  
+     <mvc:view-controller path="/" view-name="forward:/login.jsp"/>
+     <!-- 添加注解支持 -->
+     <!--<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping" 配置自动扫描包配置此配置可省略/>-->  
+     
+     <!-- 配置freeMarker的模板路径 -->  
+     <bean class="com.cn.tonyou.shiro.ShiroTagFreeMarkerConfigurer">
+     	<!-- 配置ftl页面从哪开始加载 -->  
+        <property name="templateLoaderPath" value="WEB-INF/ftl/" />  
+        <property name="defaultEncoding" value="UTF-8" />  
+        <property name="freemarkerSettings">
+            <props>
+                <prop key="template_update_delay">0</prop>
+                <prop key="default_encoding">UTF-8</prop>
+                <prop key="locale">zh_CN</prop>
+                <prop key="url_escaping_charset">UTF-8</prop>
+                <prop key="whitespace_stripping">true</prop>
+                <prop key="number_format">#</prop>
+                <prop key="classic_compatible">true</prop>
+                <prop key="template_update_delay">5</prop> <!--检查模板是否更新  秒 -->   
+            </props>
+        </property>
+     </bean>  
+     <!-- 定义不被SpringMVC拦截的静态资源（html, js, css等文件），通用方法-->
+	    <mvc:resources location="/" mapping="/**/*.html"/>
+		<mvc:resources location="/" mapping="/**/*.js"/>
+		<mvc:resources location="/" mapping="/**/*.css"/>
+		<mvc:resources location="/" mapping="/**/*.ttf"/>
+		<mvc:resources location="/" mapping="/**/*.woff"/>
+		<mvc:resources location="/" mapping="/**/*.swf"/>
+		<mvc:resources location="/" mapping="/**/*.png"/>
+		<mvc:resources location="/" mapping="/**/*.jpg"/>
+		<mvc:resources location="/" mapping="/**/*.gif"/>
+		<mvc:resources location="/" mapping="/**/*.ioc"/>
+		<mvc:resources location="/" mapping="/**/*.ico"/>
+		<mvc:resources location="/" mapping="/**/*.eot"/>
+		
+     <!-- freemarker视图解析器 -->  
+     <bean id="viewResolver"
+		class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.freemarker.FreeMarkerView"></property>
+		<property name="prefix" value="/" />
+		<property name="suffix" value=".ftl" />
+		<property name="order" value="0"></property>
+		<property name="contentType" value="text/html;charset=utf-8" />
+		<property name="exposeRequestAttributes" value="true" />
+		<property name="exposeSessionAttributes" value="true" />
+		<property name="exposeSpringMacroHelpers" value="true" />
+		<property name="requestContextAttribute" value="request" />
+		<property name="allowSessionOverride" value="true" />
+		<property name="allowRequestOverride" value="true" />
+	</bean> 
+</beans>   

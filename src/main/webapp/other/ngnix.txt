@@ -1,0 +1,4 @@
+ngnix 反向代理
+redis 缓存
+微服务 分布式
+websphere、weblogic、jboss

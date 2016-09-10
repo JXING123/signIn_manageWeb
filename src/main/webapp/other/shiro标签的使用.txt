@@ -1,0 +1,32 @@
+ guest标签：验证当前用户是否为“访客”，即未认证（包含未记住）的用户；shiro标签：
+<shiro:guest></shiro:guest> ；freemark中：
+<@shiro.guest>
+</@shiro.guest>
+user标签：认证通过或已记住的用户 shiro标签：
+<shiro:user> </shiro:user> ；freemark中：
+<@shiro.user>
+</@shiro.user>
+authenticated标签：已认证通过的用户。不包含已记住的用户，这是与user标签的区别所在。 shiro标签：
+<shiro:authenticated> </shiro:authenticated>；freemark中：
+<@shiro.authenticated>
+</@shiro.authenticated>
+notAuthenticated标签：未认证通过的用户。与authenticated标签相对。 shiro标签：
+<shiro:notAuthenticated> </shiro:notAuthenticated>；freemark中：
+<@shiro.notAuthenticated>
+</@shiro.notAuthenticated>
+principal标签：输出当前用户信息，通常为登录帐号信息 shiro标签：Hello,
+<@shiro.principal property="name" /> ；freemarker中： Hello,
+<@shiro.principal property="name" />, how are you today? hasRole标签：验证当前用户是否属于该角色 ，shiro标签：
+<shiro:hasRole name="administrator"> Administer the system </shiro:hasRole> ；freemarker中：
+<@shiro.hasRole name=”admin”>Hello admin!</@shiro.hasRole>
+hasAnyRoles标签：验证当前用户是否属于这些角色中的任何一个，角色之间逗号分隔 ，shiro标签：
+<shiro:hasAnyRoles name="admin,user,operator"> Administer the system </shiro:hasAnyRoles> ；freemarker中：
+<@shiro.hasAnyRoles name="admin,user,operator">Hello admin!</@shiro.hasAnyRoles>
+hasPermission标签：验证当前用户是否拥有该权限 ，shiro标签：
+<shiro:hasPermission name="/order:*"> 订单 </shiro:hasPermission> ；freemarker中：
+<@shiro.hasPermission name="/order:*">订单/@shiro.hasPermission> lacksRole标签：验证当前用户不属于该角色，与hasRole标签想反，shiro标签：
+	<shiro:hasRole name="admin"> Administer the system </shiro:hasRole> ；freemarker中：
+	<@shiro.hasRole name="admin">Hello admin!</@shiro.hasRole>
+	lacksPermission标签：验证当前用户不拥有某种权限，与hasPermission标签是相对的，shiro标签：
+	<shiro:lacksPermission name="/order:*"> trade </shiro:lacksPermission> ；freemarker中：
+	<@shiro.lacksPermission name="/order:*">trade</@shiro.lacksPermission>
